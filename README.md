@@ -1,2 +1,2 @@
 # MatchPoint
-App multiplataforma utilizando Kotlin (KMP) para vôlei
+App para vôlei mobile Android utilizando Kotlin
