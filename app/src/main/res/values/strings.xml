@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">Volley Score</string>
+    <string name="home_new_match">Nova partida</string>
+    <string name="home_empty_title">Nenhuma partida ainda</string>
+    <string name="home_empty_message">Crie uma partida para começar a marcar o placar.</string>
+    <string name="home_error_message">Não foi possível carregar as partidas.</string>
+    <string name="home_retry">Tentar novamente</string>
+    <string name="setup_title">Nova partida</string>
+    <string name="setup_back">Voltar</string>
+    <string name="setup_home_team">Time da casa</string>
+    <string name="setup_away_team">Time visitante</string>
+    <string name="setup_sets_label">Quantidade de sets</string>
+    <string name="setup_best_of_three">3 sets</string>
+    <string name="setup_best_of_five">5 sets</string>
+    <string name="setup_home_players">Jogadores da casa</string>
+    <string name="setup_away_players">Jogadores visitantes</string>
+    <string name="setup_player_name">Nome do jogador</string>
+    <string name="setup_add_player">Adicionar jogador</string>
+    <string name="setup_remove_player">Remover jogador</string>
+    <string name="setup_confirm">Confirmar</string>
+    <string name="scoreboard_title">Partida</string>
+    <string name="scoreboard_sets">Sets %1$d x %2$d</string>
+    <string name="scoreboard_current_set">Set %1$d</string>
+    <string name="scoreboard_add_point">Ponto</string>
+    <string name="scoreboard_undo">Desfazer ponto</string>
+    <string name="scoreboard_finish">Finalizar partida</string>
+    <string name="scoreboard_serving">Saque</string>
+    <string name="scoreboard_select_player">Quem pontuou?</string>
+    <string name="scoreboard_cancel">Cancelar</string>
+    <string name="scoreboard_winner">Vencedor: %1$s</string>
+    <string name="scoreboard_finished">Partida encerrada</string>
+</resources>
