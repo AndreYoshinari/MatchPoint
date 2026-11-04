@@ -1,202 +1,215 @@
-🏐 MatchPoint
+# MatchPoint (Volley Score)
 
-MatchPoint é um aplicativo Android desenvolvido para auxiliar no gerenciamento e acompanhamento de partidas de vôlei. A proposta é oferecer uma experiência simples e intuitiva para organizar partidas, cadastrar jogadores, acompanhar a pontuação e consultar estatísticas.
+Aplicativo Android de placar para partidas reais de vôlei. O projeto demonstra desenvolvimento Android moderno: Kotlin, Jetpack Compose, MVVM, Clean Architecture, persistência local e testes de regras de negócio.
 
-O projeto está sendo desenvolvido com foco em boas práticas de desenvolvimento Android, arquitetura organizada, separação de responsabilidades e persistência local de dados.
+Nome técnico do módulo: `br.com.matchpoint`. Nome visível no launcher: **Volley Score**.
 
-✨ Funcionalidades
+---
 
-Implementadas / em desenvolvimento
+## Objetivo
 
-Estrutura inicial do projeto Android.
+Oferecer um placar utilizável durante o jogo — configurar times e elenco, marcar pontos por jogador, controlar sets e saque, desfazer o último ponto e encerrar a partida — com persistência imediata no dispositivo.
 
-Modelagem de domínio para partidas, jogadores, equipes e sets.
+O app também serve como peça de portfólio: as regras de vôlei ficam isoladas no Domain, a UI só observa estado e dispara eventos, e a persistência não conhece “set acaba em 25”.
 
-Regras de pontuação do vôlei.
+---
 
-Casos de uso para gerenciamento de partidas.
+## Funcionalidades
 
-Persistência local utilizando Room.
+Implementadas na versão atual:
 
-Separação entre camadas de apresentação, domínio e dados.
+- **Home:** lista de partidas (rascunho, em andamento e finalizadas), estado vazio, carregamento, erro com nova tentativa, atalho para nova partida.
+- **Configuração:** nomes dos times, formato em 3 ou 5 sets, jogadores por time. Confirmação cria a partida, persiste o elenco e abre o placar.
+- **Placar ao vivo:** nomes, placar do set, placar de sets, indicador de saque, ponto atribuído a um jogador, desfazer último ponto, finalizar partida. A tela permanece ligada durante o jogo.
+- **Regras de pontuação:** rally scoring, vitória por 2 (quando configurada), set decisivo com meta própria, encerramento automático ao atingir os sets necessários.
+- **Persistência local:** a partida sobrevive à rotação de tela e ao encerramento do processo.
 
-Injeção de dependências com Koin.
+Não fazem parte desta versão: pagamentos, rede, autenticação, estatísticas na UI, tela de detalhe/súmula, cadastro reutilizável de times, rotação em quadra, substituições ou tipos de ponto (ace, bloqueio, erro).
 
-Estrutura de testes unitários.
+---
 
-Atualizar esta lista conforme cada funcionalidade estiver efetivamente implementada e validada.
+## Tecnologias
 
-🛠️ Tecnologias e ferramentas
+| Área | Stack |
+|------|--------|
+| Linguagem | Kotlin |
+| UI | Jetpack Compose, Material 3 |
+| Arquitetura | MVVM + Clean Architecture |
+| Injeção | Koin |
+| Assíncrono | Coroutines, StateFlow |
+| Navegação | Navigation Compose |
+| Persistência | Room |
+| Testes | JUnit, Mockito, Turbine, kotlinx-coroutines-test |
 
-- Kotlin — linguagem principal.
-- Android SDK — desenvolvimento nativo Android.
-- Jetpack Compose — construção da interface declarativa, caso utilizado nas telas finais.
-- MVVM — organização da camada de apresentação.
-- Clean Architecture — separação de responsabilidades e regras de negócio.
-- Room — persistência local de dados.
-- Koin — injeção de dependências.
-- Coroutines / Flow — operações assíncronas e fluxo de dados.
-- JUnit / Mockito — testes automatizados.
+---
 
-🏗️ Arquitetura
+## Arquitetura
 
-O projeto utiliza uma organização baseada em Clean Architecture, dividindo as responsabilidades em três camadas principais:
+Três camadas em um único módulo `app`. A seta de dependência aponta para o Domain.
 
-Presentation
-Responsável pela interface do usuário, gerenciamento de estados e interação com os casos de uso.
+```text
+Presentation  →  Domain  ←  Data
+     UI/VM         regras         Room
+```
 
-Screens
-ViewModels
-UiStates
-Navigation
-Theme
+- **Presentation:** Compose, ViewModels, `UiState` imutável. Não acessa Room. Não decide quem ganha o set.
+- **Domain:** modelos, `MatchRepository` (contrato), use cases, `ScoringRules`. Sem Android, Compose ou Room.
+- **Data:** entidades, DAOs, mappers Entity ↔ Domain, `MatchRepositoryImpl`. Sem regra de pontuação.
 
-Domain
-Contém as regras de negócio e os conceitos centrais do aplicativo, sem depender de detalhes de implementação do Android ou da persistência.
-Models
-Repository interfaces
-UseCases
-Scoring Rules
+Injeção: `MatchPointApp` inicia o Koin com `presentationModule`, `domainModule` e `dataModule`.
 
-Data
-Responsável pela implementação dos contratos definidos no domínio e pelo acesso aos dados.
-Room Database
-DAOs
-Entities
-Mappers
-Repository Implementations
+```mermaid
+flowchart LR
+  UI[Compose] --> VM[ViewModel]
+  VM --> UC[UseCase]
+  UC --> Rules[ScoringRules]
+  UC --> Repo[MatchRepository]
+  Repo --> Room[(SQLite)]
+  Room --> Repo
+  Repo --> UC
+  UC --> VM
+  VM --> UI
+```
 
-Estrutura de diretórios
+---
 
-br.com.matchpoint
-│
-├── app/
-│   ├── MainActivity.kt
-│   └── MatchPointApp.kt
-│
-├── data/
-│   ├── local/
-│   │   ├── dao/
-│   │   ├── db/
-│   │   ├── entity/
-│   │   └── mapper/
-│   │
-│   └── repository/
-│
-├── di/
-│   ├── DataModule.kt
-│   ├── DomainModule.kt
-│   └── PresentationModule.kt
-│
-├── domain/
-│   ├── model/
-│   ├── repository/
-│   ├── scoring/
-│   └── usecase/
-│
-└── presentation/
-    ├── components/
-    ├── error/
-    ├── home/
-    ├── matchdetail/
-    ├── matchsetup/
-    ├── navigation/
-    ├── roster/
-    ├── scoreboard/
-    ├── stats/
-    └── theme/
+## Estrutura de diretórios
 
-Fluxo de comunicação
+```text
+app/src/main/java/br/com/matchpoint
+  app/                 MatchPointApp, MainActivity
+  di/                  Módulos Koin
+  presentation/
+    navigation/        Rotas e NavHost
+    home/              Lista de partidas
+    matchsetup/        Nova partida
+    scoreboard/        Placar ao vivo
+    theme/
+  domain/
+    model/
+    repository/        Interface
+    usecase/
+    scoring/           ScoringRules
+  data/
+    local/db|dao|entity|mapper
+    repository/        MatchRepositoryImpl
+app/src/test/java/...  Testes unitários
+```
 
-A camada de apresentação interage com o domínio por meio dos casos de uso. O domínio define os contratos dos repositórios, enquanto a camada de dados fornece suas implementações.
+---
 
-Presentation
-     │
-     ▼
-  ViewModel
-     │
-     ▼
-   UseCase
-     │
-     ▼
-  Repository
-     │
-     ▼
-    Data
-     │
-     ▼
- Room Database
+## Fluxo de processamento de pagamentos
 
-🧪 Testes
+O MatchPoint **não processa pagamentos**. Não há gateway, cobrança, webhook nem conciliação financeira.
 
-O projeto possui uma estrutura dedicada a testes automatizados, buscando garantir a confiabilidade das regras de negócio e dos fluxos principais.
+O fluxo equivalente no produto é o **processamento de um ponto** (e o de finalizar a partida), ponta a ponta:
 
-Os testes contemplam:
-Regras de pontuação e encerramento de sets.
-Validação de estados das partidas.
-Casos de uso.
-Comportamento dos ViewModels.
-Repositórios fake para testes isolados.
+1. A UI dispara `onPlayerPoint(playerId)` ou `onFinishMatch()`.
+2. O `ScoreboardViewModel` chama `RegisterPointUseCase` ou `FinishMatchUseCase`.
+3. O use case lê a partida no repositório. Falhas de regra viram `DomainResult.Failure` (`MatchNotFound`, `PlayerNotFound`, `MatchAlreadyFinished`, etc.).
+4. Em um ponto, `ScoringRules.registerPoint` anexa o evento e **reconstrói** placar, saque, sets e status (`replay`).
+5. `MatchRepositoryImpl` grava o agregado em transação Room (partida, times, jogadores, sets e pontos).
+6. `ObserveMatchUseCase` emite o novo snapshot por `Flow`.
+7. O ViewModel mapeia para `Active` ou `Finished`. A UI recompõe.
 
-🚀 Como executar o projeto
+Não há estado de placar só em memória: a fonte persistida é a lista de pontos mais as regras.
 
-Pré-requisitos
+---
 
-Android Studio.
-JDK compatível com a versão do Gradle utilizada.
-Android SDK configurado.
+## Máquina de estados
 
-Instalação
+### Partida (`MatchStatus`)
 
-Clone o repositório:
+```mermaid
+stateDiagram-v2
+  [*] --> SETUP: CreateMatch
+  SETUP --> IN_PROGRESS: StartMatch
+  IN_PROGRESS --> FINISHED: sets necessarios ou FinishMatch
+  FINISHED --> IN_PROGRESS: Undo do ponto que encerrou
+```
 
-git clone https://github.com/AndreYoshinari/MatchPoint.git
+| Estado | Comportamento |
+|--------|----------------|
+| `SETUP` | Permite editar nomes, regras e elenco. Não registra ponto. |
+| `IN_PROGRESS` | Aceita ponto, undo e finalização. Elenco e regras travados. |
+| `FINISHED` | Não registra ponto. Undo do último ponto pode reabrir a partida. |
 
-Abra o projeto no Android Studio.
+Transições inválidas não lançam exceção: o Domain devolve `DomainResult.Failure`.
 
-Aguarde a sincronização do Gradle.
+### Set
 
-Execute o aplicativo em um emulador ou dispositivo Android.
+Um set está aberto (`winnerTeamId == null`) ou encerrado. Encerrar o set sem encerrar a partida abre o próximo em 0–0. O set decisivo usa `pointsToWinLastSet` quando ambos têm `setsToWin - 1` sets.
 
-🗺️ Futuras funcionalidades
+### UI do placar (`ScoreboardUiState`)
 
-O MatchPoint está em desenvolvimento e possui diversas funcionalidades planejadas para as próximas versões.
+`Loading` → `Active` (partida em andamento) ou `Finished` (encerrada) ou `Error`. Falha pontual (jogador inválido) permanece em `Active` com `actionError`, sem apagar o placar.
 
-Gerenciamento de partidas
-Histórico completo de partidas.
-Edição e exclusão de partidas.
-Recuperação de partidas em andamento.
-Configurações personalizadas de sets e pontuação.
-Jogadores e equipes
-Cadastro e edição de jogadores.
-Gerenciamento de equipes.
-Distribuição de jogadores entre equipes.
-Histórico individual de desempenho.
-Placar e acompanhamento
-Interface de placar em tempo real.
-Animações durante a atualização da pontuação.
-Desfazer última pontuação.
-Identificação do jogador responsável pelo ponto.
+A Home usa `Loading`, `Empty`, `Content` e `Error`.
 
-Estatísticas
-Estatísticas individuais por jogador.
-Estatísticas por equipe.
-Aproveitamento de vitórias e derrotas.
+---
 
-Histórico de desempenho.
-Gráficos e indicadores de desempenho.
-Evoluções técnicas
-Testes de interface e integração.
+## Estratégia de idempotência
 
-Melhorias de acessibilidade.
+Não há chave de idempotência de requisição HTTP: o app é offline e local.
 
-Exportação e compartilhamento de resultados.
-Backup e sincronização em nuvem.
+O que o código garante:
 
-👨‍💻 Desenvolvedor
+- Cada ponto recebe um **id único** (`IdGenerator` / UUID) no momento da gravação.
+- O placar não é um contador solto: `ScoringRules.replay` recalcula o estado a partir da **lista ordenada de pontos**. Gravacão e leitura não divergem por “dois campos de placar”.
+- O upsert do agregado ocorre em **transação Room**, para não persistir set sem o ponto correspondente.
+- Operações inválidas no mesmo estado (ponto em partida já encerrada, undo sem pontos) são rejeitadas com `DomainResult`, não aplicadas de novo.
 
-Desenvolvido por André Yoshinari.
+O que **não** está implementado: deduplicação de clique duplo no botão de ponto. Dois toques válidos geram dois pontos. A compensação prevista é **desfazer o último ponto**.
 
-Projeto pessoal criado para aprofundar conhecimentos em desenvolvimento Android nativo, Kotlin, arquitetura de software, persistência de dados e testes automatizados.
+---
 
-LinkedIn: https://www.linkedin.com/in/andreyoshinari/
+## Tratamento de timeout e consulta de status
+
+Não há chamada de rede nem fila de pagamento, portanto não há timeout de gateway nem polling de transação.
+
+A consulta de status da partida é **reativa e local**:
+
+- `MatchDao.observeAggregate` / `observeAllAggregates` expõem `Flow`.
+- Home e placar observam esse fluxo (`ObserveMatchHistoryUseCase`, `ObserveMatchUseCase`).
+- Se o `Flow` da Home falhar, o estado vai para `Error` e **Tentar novamente** reinscreve a observação.
+- Após kill do processo, o status volta do SQLite; o placar reabre a partida pelo `matchId`.
+
+Erros de negócio (partida inexistente, elenco inválido, partida não iniciada) são modelados em `DomainError` e traduzidos para mensagem na Presentation (`toUiMessage()`), sem crash.
+
+---
+
+## Testes automatizados
+
+Testes unitários em `app/src/test` (JUnit). Sem UI tests no recorte atual.
+
+| Suíte | Foco |
+|-------|------|
+| `ScoringRulesTest` / `VolleyballMatchRulesTest` | Ponto, saque, vitória por 2, set decisivo, undo, estados inválidos, fim de jogo |
+| `MatchUseCasesTest` / `MatchInvalidStateUseCaseTest` | Criar, iniciar, elenco, setup travado após o início; Turbine nos `Flow` |
+| `MatchViewModelTest` | `ScoreboardViewModel`: loading, ponto, erro, fim de set, fim de partida; Mockito no repositório, Turbine no `StateFlow` |
+
+```bash
+./gradlew testDebugUnitTest
+```
+
+No Windows: `.\gradlew.bat testDebugUnitTest`.
+
+---
+
+## Como executar
+
+Requisitos: Android Studio recente, JDK 17+ (o wrapper usa Gradle 9.6), dispositivo ou emulador com API 24 ou superior.
+
+```bash
+# Compilar APK de debug
+./gradlew assembleDebug
+
+# Instalar e executar pelos testes unitários
+./gradlew testDebugUnitTest
+```
+
+No Windows, use `gradlew.bat` no lugar de `./gradlew`.
+
+Pelo Android Studio: abrir a pasta do projeto, sync Gradle, Run na `app` (`MainActivity`).
+
+APK gerado em `app/build/outputs/apk/debug/`.
